@@ -8,7 +8,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium import webdriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
-import configparser
 from selenium.webdriver.support.ui import Select
 from openai import OpenAI
 import traceback
@@ -19,11 +18,13 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import unicodedata
-senders_email = 'reminder@drsingla.ca'
-port = 587
-server = 'smtp.office365.com'
-password = "470Chrysler!"
+from dotenv import load_dotenv
 
+load_dotenv()
+senders_email = os.getenv("SENDERS_EMAIL")
+port = int(os.getenv("PORT"))
+server = os.getenv("SERVER")
+password = os.getenv("PASSWORD")
 
 def patient_not_found(name, dob, check_in_time):
     receivers = ['receptionist@drsingla.ca', 'Mohit.singla.md@gmail.com']
@@ -45,13 +46,10 @@ def patient_not_found(name, dob, check_in_time):
         save_record(name, dob)
         save_record(name, check_in_time)
 script_directory = os.getcwd()
-config_file = os.path.join(script_directory, 'config.ini')
 downloads_folder = os.path.join(script_directory, "Downloads")
 RECORDS_FILE = os.path.join(script_directory, "records.txt")
 RECORDS_FILE_LATE = os.path.join(script_directory, "late_records.txt")
-config = configparser.ConfigParser()
-config.read(config_file)
-opennai_api_key = config['config']['openai_api_key']
+opennai_api_key = os.getenv("OPENAI_API_KEY")
 logger = logging.getLogger("customLogger")
 logger.setLevel(logging.INFO)
 file_handler = logging.FileHandler(os.path.join(script_directory,'App.log'), encoding="utf-8")
@@ -203,17 +201,16 @@ def main():
         print("Starting Chrome...")
         subprocess.Popen(cmd)
     
-    config = configparser.ConfigParser()
-    config.read(config_file)
-    thereceptionist_username = config['thereceptionist']['username']
-    thereceptionist_password = config['thereceptionist']['password']
-    cerebrum_username = config['cerebrum']['username']
-    cerebrum_password = config['cerebrum']['password']
-    o_day_m = config['config']['Monday']
-    o_day_t = config['config']['Tuesday'] 
-    o_day_w = config['config']['Wednesday']
-    o_day_th = config['config']['Thursday']
-    o_day_f = config['config']['Friday']
+
+    thereceptionist_username = os.getenv("THERECEPTIONIST_USERNAME")
+    thereceptionist_password = os.getenv("THERECEPTIONIST_PASSWORD")
+    cerebrum_username = os.getenv("CEREBRUM_USERNAME")
+    cerebrum_password = os.getenv("CEREBRUM_PASSWORD")
+    o_day_m = os.getenv("CONFIG_MONDAY")
+    o_day_t = os.getenv("CONFIG_TUESDAY")
+    o_day_w = os.getenv("CONFIG_WEDNESDAY")
+    o_day_th = os.getenv("CONFIG_THURSDAY")
+    o_day_f = os.getenv("CONFIG_FRIDAY")
 
 
     
@@ -671,9 +668,7 @@ def main():
                         pass
                     save_record(name, check_in_time)
                     save_record(name, dob)
-            dt = datetime.now()
-            check_in_date = dt.strftime("%m/%d/%Y")
-            check_in_day = dt.strftime("%A")
+            
             pwrite(f"Check-in date: {check_in_date}")
             
             # if check_in_day in ["Wednesday", "Thursday", "Friday"]:
@@ -682,7 +677,18 @@ def main():
             #     clinic_name = "Singla_NM"
             # else:
             #     clinic_name = None
-            clinic_name = config["config"].get(check_in_day, None)
+            DAY_ENV_MAP = {
+                "Monday": "CONFIG_MONDAY",
+                "Tuesday": "CONFIG_TUESDAY",
+                "Wednesday": "CONFIG_WEDNESDAY",
+                "Thursday": "CONFIG_THURSDAY",
+                "Friday": "CONFIG_FRIDAY",
+            }
+            dt = datetime.now()
+            check_in_date = dt.strftime("%m/%d/%Y")
+            check_in_day = dt.strftime("%A")
+            env_key = DAY_ENV_MAP.get(check_in_day)
+            clinic_name = os.getenv(env_key) if env_key else None
             d_t = check_in_date.replace("/", "%2F")
             for handle in driver.window_handles:
                     driver.switch_to.window(handle)
