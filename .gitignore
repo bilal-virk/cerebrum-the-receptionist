@@ -1,9 +1,12 @@
 __pycache__/
 .env
+config.ini
 *.log
-venv/
-.env/
-node_modules/
+App.log
 .idea/
 .vscode/
-"config.ini" 
+late_records.txt
+records.txt
+run_chrome.bat
+chrome/
+images/

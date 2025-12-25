@@ -348,12 +348,18 @@ def main():
     make_click('//*[@id="date-range"]', t=10)
     make_click('//*[@data-range-key="Today"]', t=10, sleep_time=2)
     make_click('//button[@type="submit"]')
+    try:
+        make_click('//*[@id="load-more"]')
+    except:
+        pass
     time.sleep(5)
 
     try:
         leads = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//*[@id="visits"]//tr')))
     except:
         leads = []
+    nowe = datetime.now()
+    today_date = nowe.strftime("%Y-%m-%d")
     for lead in leads:
         try:
             for handle in driver.window_handles:
@@ -377,6 +383,7 @@ def main():
             name = lead.find_element(By.XPATH, './/*[@class="ellipsis text-bold"]').text.strip()
             if 'Sachleen kaur' in name:
                 continue
+            check_in_time = f'{check_in_time}||{today_date}'
             if record_exists(name, check_in_time):
                 pwrite(f'Skipping already processed patient: {name} {check_in_time}')
                 continue
@@ -396,7 +403,10 @@ def main():
                         continue
                     last_two = extract_text('//*[contains(text(), "Last two")]/../..//*[@class="text-right"]')
                     #phone = extract_text('//*[contains(text(), "hone number")]/../..//*[@class="text-right"]')
-                    phone = extract_text('//a[contains(@href, "tel")]')
+                    try:
+                        phone = extract_text('//a[contains(@href, "tel")]')
+                    except:
+                        phone = None
                     address = extract_text('//*[contains(text(), "street address")]/../..//*[@class="text-right"]')
                     city = extract_text('//*[contains(text(), "City/Town")]/../..//*[@class="text-right"]')
                     family_doc = extract_text('//*[contains(text(), "FULL Name of family doctor")]/../..//*[@class="text-right"]')
@@ -425,7 +435,11 @@ def main():
                     try:
                         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[contains(text(), "{newDate}")]')))
                     except:
-                        pwrite(f'Patient Not Found {name} {dob} {address} {last_two} {phone} {email}')
+                        try:
+                            driver.get(f'https://cerebrum.mycerebrum.com/patients/patientsearch?searchType=0&patientSearch={first_name}')
+                            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[contains(text(), "{newDate}")]')))
+                        except:
+                            pwrite(f'Patient Not Found {name} {dob} {address} {last_two} {phone} {email}')
                         continue
                     try:
                         element = WebDriverWait(driver, 10).until(
@@ -606,10 +620,16 @@ def main():
                     try:
                         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[contains(text(), "{newDate}")]')))
                     except:
-                        pwrite(f'Patient Not Found {name}')
-                        patient_not_found(name, dob, check_in_time)
-                        save_record(name, dob)
-                        save_record(name, check_in_time)
+                        try:
+                            driver.get(f'https://cerebrum.mycerebrum.com/patients/patientsearch?searchType=0&patientSearch={first_name}')
+                            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[contains(text(), "{newDate}")]')))
+                        except:
+
+                            pwrite(f'Patient Not Found {name}')
+                            patient_not_found(name, dob, check_in_time)
+                            save_record(name, dob)
+                            save_record(name, check_in_time)
+
                     try:
                         element = WebDriverWait(driver, 10).until(
                             EC.presence_of_element_located(
@@ -715,8 +735,8 @@ while True:
             main()
         except Exception as e:
             pwrite(f"Error occurred: {traceback.format_exc()}")
-        pwrite("Waiting for 30 seconds before next check...")
-        time.sleep(30)
+        pwrite("Waiting for 20 seconds before next check...")
+        time.sleep(20)
 
     else:
         # Reason logging
