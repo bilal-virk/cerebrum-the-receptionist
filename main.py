@@ -186,7 +186,7 @@ cmd = [
     f"--user-data-dir={user_data_dir}",
     "--disable-popup-blocking"
 ]
-def main(daytime=True):
+def main(daytime=True, test=False):
     def is_chrome_running(port):
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             try:
@@ -343,8 +343,9 @@ def main(daytime=True):
     except:
         pwrite("Thereceptionist Already Logged In")
     if daytime:
-        make_click('//*[@id="date-range"]', t=10)
-        make_click('//*[@data-range-key="Today"]', t=10, sleep_time=2)
+        if not test:
+            make_click('//*[@id="date-range"]', t=10)
+            make_click('//*[@data-range-key="Today"]', t=10, sleep_time=2)
         Select(driver.find_element(By.XPATH, '(//select)[1]')).select_by_visible_text('Check In')
         make_click('//button[@type="submit"]')
         
@@ -442,12 +443,14 @@ def main(daytime=True):
                         env_key = DAY_ENV_MAP.get(check_in_day)
                         clinic_name = os.getenv(env_key) if env_key else None
                         d_t = check_in_date.replace("/", "%2F")
+                        if test:
+                            d_t= "12%2F19%2F2025"
                         for handle in driver.window_handles:
                                 driver.switch_to.window(handle)
                                 if "cerebrum" in driver.current_url:
                                     break
 
-                        c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?Date={d_t}&FilterPatient={last_name}'
+                        #c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?Date={d_t}&FilterPatient={last_name}'
                         c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?OfficeId=30&Date={d_t}&AppointmentStatusId=-1&Expected=False&ExcludeTestOnly=False&ExcludeCancelled=True&OnlyActionOnAbnormal=False&FilterPatient={last_name}&ShowOrders=False&Page=1&PageSize=25'
                         driver.get(c_url)
                         # make_click('//input[@name="Date" and @type="text"]', sleep_time=2)
@@ -479,31 +482,33 @@ def main(daytime=True):
                             save_record_late(name, check_in_time)
                         
                         d_t = check_in_date.replace("/", "%2F")
-                        c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?OfficeId=30&Date={d_t}&AppointmentStatusId=-1&Expected=False&ExcludeTestOnly=False&ExcludeCancelled=True&OnlyActionOnAbnormal=False&FilterPatient={last_name}&ShowOrders=False&Page=1&PageSize=25'
-                        driver.get(c_url)
+                        # c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?OfficeId=30&Date={d_t}&AppointmentStatusId=-1&Expected=False&ExcludeTestOnly=False&ExcludeCancelled=True&OnlyActionOnAbnormal=False&FilterPatient={last_name}&ShowOrders=False&Page=1&PageSize=25'
+                        # driver.get(c_url)
 
                         try:
-                            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[contains(text(), "{newDate}")]')))
+                            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[@class="td-patient"]//*[contains(text(), "{last_name.upper()}") and contains(text(), "{first_name.upper()}")]')))
                         except:
-                            try:
-                                driver.get(f'https://cerebrum.mycerebrum.com/patients/patientsearch?searchType=0&patientSearch={first_name}')
-                                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[contains(text(), "{newDate}")]')))
-                            except:
-                                pwrite(f'Patient Not Found {name} {dob} {address} {last_two} {phone} {email}')
-                            continue
-                        try:
-                            element = WebDriverWait(driver, 10).until(
-                                EC.presence_of_element_located(
-                                    (By.XPATH, f'//*[contains(text(), "{newDate}")]/..//*[@class="btn-edit-patient"]')
-                                )
-                            )
-                            driver.execute_script("arguments[0].click();", element)
-                        except:
+                            # try:
+                            #     driver.get(f'https://cerebrum.mycerebrum.com/patients/patientsearch?searchType=0&patientSearch={first_name}')
+                            #     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[contains(text(), "{newDate}")]')))
+                            # except:
                             pwrite(f'Patient Not Found {name} {dob} {address} {last_two} {phone} {email}')
-                            patient_not_found(name, dob, check_in_time)
-                            save_record(name, dob)
-                            save_record(name, check_in_time)
                             continue
+                        make_click(f'//*[@class="td-patient"]//*[contains(text(), "{last_name.upper()}") and contains(text(), "{first_name.upper()}")]')
+                        make_click(f'//*[@class="td-patient"]//*[contains(text(), "{last_name.upper()}") and contains(text(), "{first_name.upper()}")]/..//*[@class="btn-edit-patient"]')
+                        # try:
+                        #     element = WebDriverWait(driver, 10).until(
+                        #         EC.presence_of_element_located(
+                        #             (By.XPATH, f'//*[contains(text(), "{newDate}")]/..//*[@class="btn-edit-patient"]')
+                        #         )
+                        #     )
+                        #     driver.execute_script("arguments[0].click();", element)
+                        # except:
+                        #     pwrite(f'Patient Not Found {name} {dob} {address} {last_two} {phone} {email}')
+                        #     patient_not_found(name, dob, check_in_time)
+                        #     save_record(name, dob)
+                        #     save_record(name, check_in_time)
+                        #     continue
                         try:
                             phlist = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//*[@name="phList"]/tbody//tr[position() < last()]/td[1]')))
                         except:
@@ -737,20 +742,22 @@ def main(daytime=True):
                 pwrite(f"Error occurred: {traceback.format_exc()}")
 
     else:
-        make_click('//*[@id="date-range"]', t=10)
-        make_click('//*[@data-range-key="Today"]', t=10, sleep_time=2)        
-        make_click('//button[@type="submit"]')
+        if not test:
+            make_click('//*[@id="date-range"]', t=10)
+            make_click('//*[@data-range-key="Today"]', t=10, sleep_time=2)        
+            make_click('//button[@type="submit"]')
         
         time.sleep(5)
         for l in range(100):
             try:
                 make_click('//*[@id="load-more"]', t=5)
             except:
+                time.sleep(5)
                 try:
                     make_click('//*[@id="load-more"]', t=5)
                 except:
                     break
-            time.sleep(5)
+            
 
         try:
             leads = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//*[@id="visits"]//tr')))
@@ -797,9 +804,127 @@ def main(daytime=True):
                 #if not record_exists_late(name, check_in_time):
                 if status == "Check In":
                         continue
+                # Holter 74, Holter 14, stress tilt content,  ROI release - all can be uploaded end of day just like already you have made for Holter 72
+                # if status == "Holter 72 hr" or status == "Holter 74" or status=="Stress/ Tilt Consent" or status == "Holter 14 days" or status == "ROI Release" or status == "ROI Request":
+                #     ...
+                dob = extract_text('//*[contains(text(), "Patient")]/../..//*[@class="text-right"]')
+
+                if record_exists(name, dob) or record_exists(name, check_in_time):
+                    pwrite(f'Skipping already processed patient: {name} {dob}')
+                    continue
+                try:
+                    make_click('//*[@data-balloon="View PDF Agreement"]')
+                except:
+                    make_click('.//*[@class="ellipsis text-bold"]',driver=lead, t=10)
+                
+                
+                months = {
+                    "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr",
+                    "05": "May", "06": "Jun", "07": "Jul", "08": "Aug",
+                    "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec"
+                }
+                parts = dob.split("-")
+                newDate = f"{months[parts[1]]}-{parts[0]}-{parts[2]}"
+                timeout = 20  # seconds
+                max_age = 60  # seconds (file must be <= 60 seconds old)
+
+                end_time = time.time() + timeout
+                pdf_path = None
+
+                while time.time() < end_time:
+                    now = datetime.now()
+                    for fname in os.listdir(downloads_folder):
+                        if fname.lower().endswith(".pdf"):
+                            fpath = os.path.join(downloads_folder, fname)
+                            mtime = datetime.fromtimestamp(os.path.getmtime(fpath))
+                            if now - mtime <= timedelta(seconds=max_age):
+                                pdf_path = fpath
+                                break
+                    if pdf_path:
+                        break
+                    time.sleep(1)
+                for handle in driver.window_handles:
+                    driver.switch_to.window(handle)
+                    if "cerebrum" in driver.current_url:
+                        break
+                # write_t('//*[@placeholder="Patient Search"]', last_name)
+                # time.sleep(3)
+                # make_click('//*[@id="btn_search"]')
+                dt = datetime.now()
+                check_in_date = dt.strftime("%m/%d/%Y")
+                check_in_day = dt.strftime("%A")
+                env_key = DAY_ENV_MAP.get(check_in_day)
+                clinic_name = os.getenv(env_key) if env_key else None
+                d_t = check_in_date.replace("/", "%2F")
+                if test:
+                    d_t= "12%2F19%2F2025"
+                for handle in driver.window_handles:
+                        driver.switch_to.window(handle)
+                        if "cerebrum" in driver.current_url:
+                            break
+
+                #c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?Date={d_t}&FilterPatient={last_name}'
+                c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?OfficeId=30&Date={d_t}&AppointmentStatusId=-1&Expected=False&ExcludeTestOnly=False&ExcludeCancelled=True&OnlyActionOnAbnormal=False&FilterPatient={last_name}&ShowOrders=False&Page=1&PageSize=25'
+                driver.get(c_url)
+                #driver.get(f'https://cerebrum.mycerebrum.com/patients/patientsearch?searchType=0&patientSearch={last_name}')
+                if clinic_name:
+                    dropdown = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.ID, "OfficeId"))
+                    )
+                    Select(dropdown).select_by_visible_text(clinic_name)
+                try:
+                    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[@class="td-patient"]//*[contains(text(), "{last_name.upper()}") and contains(text(), "{first_name.upper()}")]')))
+                    make_click(f'//*[@class="td-patient"]//*[contains(text(), "{last_name.upper()}") and contains(text(), "{first_name.upper()}")]')
+                    make_click(f'//*[@class="td-patient"]//*[contains(text(), "{last_name.upper()}") and contains(text(), "{first_name.upper()}")]/..//*[@class="btn-loose-report-upload"]')
+                except:
+                    try:
+                        driver.get(f'https://cerebrum.mycerebrum.com/patients/patientsearch?searchType=0&patientSearch={first_name}')
+                        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[contains(text(), "{newDate}")]')))
+                        element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[contains(text(), "{newDate}")]/..//*[@class="btn-loose-report-upload"]')))
+                        driver.execute_script("arguments[0].click();", element)
+                    except:
+                        continue
+                        pwrite(f'Patient Not Found {name}')
+                        patient_not_found(name, dob, check_in_time)
+                        save_record(name, dob)
+                        save_record(name, check_in_time)
+
+                
+                if pdf_path:
+                    file_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="File"]')))
+                    file_input.send_keys(pdf_path)
+                try:
+                    Select(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@name="PracticeDoctorId"]')))).select_by_visible_text('Singla Mohit')
+                except:
+                    Select(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@name="PracticeDoctorId"]')))).select_by_index(1)
+                time.sleep(2)
+                try:
+                    Select(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@name="ReportClassId"]')))).select_by_visible_text('Consent Form')
+                except:
+                    Select(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@name="ReportClassId"]')))).select_by_value('53')
+                time.sleep(2)
+
+
+
+                try:
+                    Select(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@name="CategoryId"]')))).select_by_visible_text('Holter Consent')
+                except:
+                    Select(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@name="CategoryId"]')))).select_by_index(4)
+                time.sleep(2)
+                make_click('//*[@value="save" and text()="Upload File"]')
+                time.sleep(5)
+                os.remove(pdf_path)
+                pwrite(f'Holter Consent Uploaded {name} {dob}')
+                try:
+                    make_click('//*[@action="/Documents/uploads/UploadLooseReport"]//*[@class="close"]', t=5)
+                except:
+                    pass
+                save_record(name, check_in_time)
+                save_record(name, dob)
+                
             except:
                 pwrite(f"Error occurred: {traceback.format_exc()}")
-main(daytime=False)
+main(daytime=False, test=True)
 
 end_of_day_executed = False
 while True:
