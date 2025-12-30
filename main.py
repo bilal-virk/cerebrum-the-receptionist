@@ -924,7 +924,7 @@ def main(daytime=True, test=False):
                 
             except:
                 pwrite(f"Error occurred: {traceback.format_exc()}")
-main(daytime=False, test=True)
+#main(daytime=False, test=True)
 
 end_of_day_executed = False
 while True:
