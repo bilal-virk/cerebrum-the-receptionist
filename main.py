@@ -853,6 +853,13 @@ def main(daytime=True, test=False):
                 dt = datetime.now()
                 check_in_date = dt.strftime("%m/%d/%Y")
                 check_in_day = dt.strftime("%A")
+                DAY_ENV_MAP = {
+                            "Monday": "CONFIG_MONDAY",
+                            "Tuesday": "CONFIG_TUESDAY",
+                            "Wednesday": "CONFIG_WEDNESDAY",
+                            "Thursday": "CONFIG_THURSDAY",
+                            "Friday": "CONFIG_FRIDAY",
+                        }
                 env_key = DAY_ENV_MAP.get(check_in_day)
                 clinic_name = os.getenv(env_key) if env_key else None
                 d_t = check_in_date.replace("/", "%2F")
