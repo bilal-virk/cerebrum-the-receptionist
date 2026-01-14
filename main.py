@@ -451,7 +451,7 @@ def main(daytime=True, test=False):
                                     break
 
                         #c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?Date={d_t}&FilterPatient={last_name}'
-                        c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?OfficeId=30&Date={d_t}&AppointmentStatusId=-1&Expected=False&ExcludeTestOnly=False&ExcludeCancelled=True&OnlyActionOnAbnormal=False&FilterPatient={last_name}&ShowOrders=False&Page=1&PageSize=25'
+                        c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?OfficeId=30&Date={d_t}&AppointmentStatusId=-1&Expected=False&ExcludeTestOnly=False&ExcludeCancelled=True&OnlyActionOnAbnormal=False&FilterPatient={last_name}&ShowOrders=False&Page=1&PageSize=1000'
                         driver.get(c_url)
                         # make_click('//input[@name="Date" and @type="text"]', sleep_time=2)
                         # WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH,'//input[@name="Date" and @type="text"]'))).clear()
@@ -482,7 +482,7 @@ def main(daytime=True, test=False):
                             save_record_late(name, check_in_time)
                         
                         d_t = check_in_date.replace("/", "%2F")
-                        # c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?OfficeId=30&Date={d_t}&AppointmentStatusId=-1&Expected=False&ExcludeTestOnly=False&ExcludeCancelled=True&OnlyActionOnAbnormal=False&FilterPatient={last_name}&ShowOrders=False&Page=1&PageSize=25'
+                        # c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?OfficeId=30&Date={d_t}&AppointmentStatusId=-1&Expected=False&ExcludeTestOnly=False&ExcludeCancelled=True&OnlyActionOnAbnormal=False&FilterPatient={last_name}&ShowOrders=False&Page=1&PageSize=1000'
                         # driver.get(c_url)
 
                         try:
@@ -871,7 +871,7 @@ def main(daytime=True, test=False):
                             break
 
                 #c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?Date={d_t}&FilterPatient={last_name}'
-                c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?OfficeId=30&Date={d_t}&AppointmentStatusId=-1&Expected=False&ExcludeTestOnly=False&ExcludeCancelled=True&OnlyActionOnAbnormal=False&FilterPatient={last_name}&ShowOrders=False&Page=1&PageSize=25'
+                c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?OfficeId=30&Date={d_t}&AppointmentStatusId=-1&Expected=False&ExcludeTestOnly=False&ExcludeCancelled=True&OnlyActionOnAbnormal=False&FilterPatient={last_name}&ShowOrders=False&Page=1&PageSize=1000'
                 driver.get(c_url)
                 #driver.get(f'https://cerebrum.mycerebrum.com/patients/patientsearch?searchType=0&patientSearch={last_name}')
                 if clinic_name:
