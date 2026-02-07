@@ -452,6 +452,7 @@ def main(daytime=True, test=False):
 
                         #c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?Date={d_t}&FilterPatient={last_name}'
                         c_url = f'https://cerebrum.mycerebrum.com/Schedule/daysheet?OfficeId=30&Date={d_t}&AppointmentStatusId=-1&Expected=False&ExcludeTestOnly=False&ExcludeCancelled=True&OnlyActionOnAbnormal=False&FilterPatient={last_name}&ShowOrders=False&Page=1&PageSize=1000'
+
                         driver.get(c_url)
                         # make_click('//input[@name="Date" and @type="text"]', sleep_time=2)
                         # WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH,'//input[@name="Date" and @type="text"]'))).clear()
@@ -461,8 +462,17 @@ def main(daytime=True, test=False):
                                 EC.presence_of_element_located((By.ID, "OfficeId"))
                             )
                             Select(dropdown).select_by_visible_text(clinic_name)
+                        try:
+                            Select(WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '(//select[@name="drp-daysheet-page-size"])[1]')))).select_by_visible_text('1000')
+                        except:
+                            try:
+                                Select(WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '(//select[@name="drp-daysheet-page-size"])[1]')))).select_by_index(4)
+                            except:
+                                pass
+                            
                         #write_t('//*[@placeholder="Filter by patient"]', last_name)
                         #WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@placeholder="Filter by patient"]'))).send_keys(last_name)
+
                         first_name = name.split()[0]
                         try:
                             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[@class="td-patient"]//*[contains(text(), "{last_name.upper()}") and contains(text(), "{first_name.upper()}")]')))
@@ -742,7 +752,12 @@ def main(daytime=True, test=False):
                 pwrite(f"Error occurred: {traceback.format_exc()}")
 
     else:
+        try:
+            make_click('//*[@data-balloon="Clear Filter"]', t=3)
+        except:
+            pass
         if not test:
+            Select(driver.find_element(By.XPATH, '(//select)[1]')).select_by_index(0)
             make_click('//*[@id="date-range"]', t=10)
             make_click('//*[@data-range-key="Today"]', t=10, sleep_time=2)        
             make_click('//button[@type="submit"]')
@@ -785,6 +800,8 @@ def main(daytime=True, test=False):
                         pass
                 check_in_time = lead.find_element(By.XPATH, './/td[6]//div[@title]//span').text.strip()
                 status = lead.find_element(By.XPATH, './/td[3]//div[@title]//span').text.strip()
+                if status == "Check In":
+                        continue
                 name = lead.find_element(By.XPATH, './/*[@class="ellipsis text-bold"]').text.strip()
                 if 'Sachleen kaur' in name:
                     continue
@@ -794,6 +811,7 @@ def main(daytime=True, test=False):
                     continue
                 
                 last_name= name.split()[-1]
+                first_name = name.split()[0]
                 try:
                     make_click('.//*[@class="ellipsis text-bold"]',driver=lead, t=10)
                 except:
@@ -880,18 +898,42 @@ def main(daytime=True, test=False):
                     )
                     Select(dropdown).select_by_visible_text(clinic_name)
                 try:
+                    Select(WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '(//select[@name="drp-daysheet-page-size"])[1]')))).select_by_visible_text('1000')
+                except:
+                    try:
+                        Select(WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '(//select[@name="drp-daysheet-page-size"])[1]')))).select_by_index(4)
+                    except:
+                        pass
+                try:
                     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[@class="td-patient"]//*[contains(text(), "{last_name.upper()}") and contains(text(), "{first_name.upper()}")]')))
                     make_click(f'//*[@class="td-patient"]//*[contains(text(), "{last_name.upper()}") and contains(text(), "{first_name.upper()}")]')
-                    make_click(f'//*[@class="td-patient"]//*[contains(text(), "{last_name.upper()}") and contains(text(), "{first_name.upper()}")]/..//*[@class="btn-loose-report-upload"]')
+                    time.sleep(2)
+                    for ii in range(3):
+                        try:
+                            make_click(f'//*[@class="td-patient"]//*[contains(text(), "{last_name.upper()}") and contains(text(), "{first_name.upper()}")]/..//*[@class="btn-loose-report-upload"]')
+                            break
+                        except:
+                            time.sleep(2)
+                    time.sleep(2)
+                    for iii in range(3):
+                        try:
+                            make_click(f'//*[@class="td-patient"]//*[contains(text(), "{last_name.upper()}") and contains(text(), "{first_name.upper()}")]/..//*[@class="btn-loose-report-upload"]')
+                            break
+                        except:
+                            time.sleep(2)
                 except:
+                    pwrite(traceback.format_exc(), p=True)
                     try:
                         driver.get(f'https://cerebrum.mycerebrum.com/patients/patientsearch?searchType=0&patientSearch={first_name}')
                         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[contains(text(), "{newDate}")]')))
+                        
                         element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//*[contains(text(), "{newDate}")]/..//*[@class="btn-loose-report-upload"]')))
                         driver.execute_script("arguments[0].click();", element)
                     except:
-                        continue
                         pwrite(f'Patient Not Found {name}')
+                        pwrite(traceback.format_exc(), p=True)
+                        continue
+                        
                         patient_not_found(name, dob, check_in_time)
                         save_record(name, dob)
                         save_record(name, check_in_time)
@@ -901,15 +943,19 @@ def main(daytime=True, test=False):
                     file_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="File"]')))
                     file_input.send_keys(pdf_path)
                 try:
-                    Select(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@name="PracticeDoctorId"]')))).select_by_visible_text('Singla Mohit')
+                    Select(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '(//*[@name="PracticeDoctorId"])[1]')))).select_by_visible_text('Singla Mohit')
                 except:
-                    Select(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@name="PracticeDoctorId"]')))).select_by_index(1)
-                time.sleep(2)
+                    pass
+                try:
+                    Select(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '(//*[@name="PracticeDoctorId"])[2]')))).select_by_visible_text('Singla Mohit')
+                except:
+                    pass
+                
                 try:
                     Select(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@name="ReportClassId"]')))).select_by_visible_text('Consent Form')
                 except:
                     Select(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@name="ReportClassId"]')))).select_by_value('53')
-                time.sleep(2)
+                
 
 
 
@@ -931,7 +977,7 @@ def main(daytime=True, test=False):
                 
             except:
                 pwrite(f"Error occurred: {traceback.format_exc()}")
-#main(daytime=False, test=True)
+#main(daytime=False, test=False)
 
 end_of_day_executed = False
 while True:
