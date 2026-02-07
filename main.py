@@ -997,17 +997,18 @@ while True:
             pwrite(f"Error occurred: {traceback.format_exc()}")
         pwrite("Waiting for 20 seconds before next check...")
         time.sleep(20)
-
+    if  0 <= weekday <= 4 and hour >= 17 and hour <= 18:
+        try:            
+            main(daytime=False)
+        except Exception as e:
+            pwrite(f"Error during end-of-day tasks: {traceback.format_exc()}")
     elif not end_of_day_executed and 0 <= weekday <= 4 and hour >= 18:
-        # Execute end-of-day tasks
-        pwrite("Executing end-of-day tasks...")
         try:
-            # Placeholder for actual end-of-day tasks
             main(daytime=False)
         except Exception as e:
             pwrite(f"Error during end-of-day tasks: {traceback.format_exc()}")
         end_of_day_executed = True
-    else:
+    elif weekday >=5 and 7 > hour >18:
         # Reason logging
         if weekday >= 5:
             reason = "It's weekend (Saturday/Sunday)."
